@@ -1,53 +1,40 @@
 import React from 'react';
+import SidebarCard from './SidebarCard';
 
 export default function ComponentList({
   items,
+  selectedId,
   onSelect,
 }: {
-  items: Array<{ id: string; title: string; summary: string }>;
+  items: any[];
+  selectedId: string | null;
   onSelect: (id: string) => void;
 }) {
-  const [focusedIndex, setFocusedIndex] = React.useState<number | null>(null);
-
-  function onKeyDown(e: React.KeyboardEvent, index: number, id: string) {
-    if (e.key === 'Enter') {
-      onSelect(id);
-    } else if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setFocusedIndex((prev) => (prev === null ? 0 : Math.min(items.length - 1, prev + 1)));
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setFocusedIndex((prev) => (prev === null ? items.length - 1 : Math.max(0, prev - 1)));
-    }
-  }
-
-  React.useEffect(() => {
-    if (focusedIndex !== null) {
-      const el = document.querySelector(`#doc-item-${focusedIndex}`) as HTMLElement | null;
-      el?.focus();
-    }
-  }, [focusedIndex]);
-
   return (
-    <ul className="space-y-2" role="list">
-      {items.map((it, idx) => (
-        <li key={it.id}>
-          <button
-            id={`doc-item-${idx}`}
-            onClick={() => onSelect(it.id)}
-            onKeyDown={(e) => onKeyDown(e, idx, it.id)}
-            className="w-full text-left rounded-md p-3 hover:bg-white/3 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-600"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">{it.title}</div>
-                <div className="mt-1 text-sm text-zinc-400">{it.summary}</div>
-              </div>
-              <div className="text-sm text-zinc-500">›</div>
-            </div>
-          </button>
-        </li>
+    <div className="space-y-1" role="navigation" aria-label="Navegación de especificación">
+      {items.map((it) => (
+        <SidebarCard
+          key={it.id}
+          id={it.id}
+          title={it.title}
+          summary={it.summary}
+          isSelected={selectedId === it.id}
+          onClick={(id) => {
+            onSelect(id);
+            const el = document.getElementById(id);
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }}
+          onHover={(id) => {
+            // dispatch hover event via DOM CustomEvent for sidebar preview
+            const event = new CustomEvent('sidebar-hover', { detail: { id } });
+            window.dispatchEvent(event);
+          }}
+          onLeave={() => {
+            const event = new CustomEvent('sidebar-hover', { detail: { id: null } });
+            window.dispatchEvent(event);
+          }}
+        />
       ))}
-    </ul>
+    </div>
   );
 }
